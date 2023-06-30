@@ -1,0 +1,87 @@
+import pandas as pd
+from pandas_ods_reader import read_ods
+pd.set_option('display.max_columns', None)
+import plotly.express as px
+import plotly.io as pio
+import geopandas as gpd
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import plotly.graph_objects as go
+
+#import bids
+Bids = pd.read_excel("C:/Users/WES98868/Downloads/Levelling_Up_Fund_Round_2_Clean.xlsx")
+Bids_filter=Bids[["Name","Code","ITL1 Region","Country","Bid Value"]]
+pops = pd.read_excel("C:/Users/WES98868/Downloads/ukpopestimatesmid2021on2021geographyfinal.xls",sheet_name = "MYE2 - Persons", skiprows=(7))
+pops = pops[["Code","Name","Geography","All ages"]]
+IMD = pd.read_excel("C:/Users/WES98868/Downloads/la_imd.xlsx")
+
+#create sheet frames
+LG_sum = Bids_filter.groupby(["Name","Code"], as_index=False).sum()
+ITL1_sum = Bids_filter.groupby(["ITL1 Region"], as_index=False).sum()
+Country_sum = Bids_filter.groupby(["Country"], as_index=False).sum()
+
+#join pops
+LG_join = pd.merge(LG_sum, pops, left_on='Code', right_on='Code')
+#IRL1_join = pd.merge(ITL1_sum, pops, left_on=['ITL1 Region'].str.lower(), right_on=['Name'].str.lower())
+#Country_join = pd.merge(pops, Country_sum, left_on='Country', right_on='Name')
+
+#calculate £/person
+LG_join['£_Cap'] = LG_join["Bid Value"]/LG_join["All ages"]
+#IRL1_join['£_Cap'] = IRL1_join["Bid Value"]/IRL1_join["All ages"]
+#Country_join['£_Cap'] = Country_join["Bid Value"]/Country_join["All ages"]
+
+#Join IMD
+LG_join = pd.merge(LG_join, IMD, left_on='Code', right_on='Code')
+LG_Clean = LG_join[["Name_x","Code","Geography","Bid Value",'All ages','£_Cap','la-deprivation-score']]
+
+#import geofile
+lga_gdf = gpd.read_file('C:/Users/WES98868/Downloads/LAD_DEC_2022_UK_BFC.shp') 
+lga_gdf.to_file('lga_gdf.geojson', driver='GeoJSON')
+lga_gdf['Code'] = lga_gdf['LAD22CD'].astype('str') # we will join on this axis, so both dataframes need this to be the same type
+lga_gdf.head()
+
+
+LG_GP = pd.merge(LG_Clean, lga_gdf, left_on = 'Code', right_on = 'LAD22CD')
+LG_GP = LG_GP.set_index('LAD22CD')
+LG_GP.head()
+LG_GP.to_csv("LG_GP.csv")
+
+LG_GP = pd.DataFrame(LG_GP)
+
+fig, ax = plt.subplots(1,1, figsize=(20,20))
+
+divider = make_axes_locatable(ax)
+
+merged = lga_gdf.set_index('LAD22CD').join(LG_Clean.set_index('Code'))
+merged = pd.merge(lga_gdf,LG_Clean, left_on = 'LAD22CD', right_on = 'Code')
+merged.head()
+
+joined_gdf = pd.merge(lga_gdf, LG_Clean, left_on = 'LAD22CD', right_on = 'Code', how ='left')
+joined_gdf = joined_gdf[["LAD22CD","LONG_x","LAT_x","geometry_x","Bid Value","All ages","£_Cap", "la-deprivation-score"]]
+joined_gdf.to_file('C:/Users/WES98868/Downloads/lga_gdf.geojson', driver='GeoJSON')
+
+
+lga_gdf = gpd.read_file('C:/Users/WES98868/Downloads/lga_gdf.geojson')         
+lga_gdf.plot()
+
+lga_gdf['£_Cap']= lga_gdf['£_Cap'].fillna(0)
+fig, ax = plt.subplots(1,1, figsize=(20,20))
+rbb = np.loadtxt('cmaps/runoff-brownblue.txt')/255;
+lga_gdf.plot(column='£_Cap', cmap=rbb, edgecolor='grey',linewidth=.2, ax=ax,  legend=True, 
+         legend_kwds={'label': "£_Cap"})
+ax.axis('off')
+
+
+
+
+fig, ax = plt.subplots(1,1, figsize=(20,20))
+cax = divider.append_axes("right", size="3%", pad=-1) #resize the colorbar
+lga_gdf.plot(column='£_Cap', cmap='viridis_r',, ax=ax,cax=cax,  legend=True, 
+         legend_kwds={'label': "£_Cap"})
+lga_gdf.boundary.plot(color='#BABABA', ax=ax, linewidth=0.3) #Add some borders to the geometries
+lga_gdf.geometry.boundary.plot(color='#BABABA', ax=ax, linewidth=0.3) #Add some borders to the geometries
+ax.axis('off')
+
+
+

@@ -1,0 +1,26 @@
+
+setwd("~/R")
+
+library(shiny)
+library(chorddiag)
+library(readr)
+library(RColorBrewer)
+
+X2020_Supply_Tables_SIC <- read_csv("2020 Supply Tables SIC.csv")
+rownames(X2020_Supply_Tables_SIC) <- X2020_Supply_Tables_SIC$...1
+M<- data.frame(X2020_Supply_Tables_SIC, row.names = X2020_Supply_Tables_SIC$...1)
+M <- M[,-1]
+
+#clip totals
+M <- M[-21,-21]
+m <- data.matrix(M, rownames.force = NA)
+
+SIC <- c(colnames(M))
+dimnames(m) <- list(have = SIC,prefer = SIC)
+
+n <- 20
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+pie(rep(1,n), col=sample(col_vector, n))
+groupColors <- col_vector
+chorddiag(m, groupColors = groupColors, groupnamePadding = 0)

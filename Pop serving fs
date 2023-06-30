@@ -1,0 +1,74 @@
+#load packages
+library("ggplot2")
+library("dplyr")
+library("broom")
+library("ggpubr")
+
+#set work directory
+setwd("C:/Users/WES98868/OneDrive - Mott MacDonald/Documents/R/Carpenters sq")
+
+#import data
+IND <- read.csv(file = "nomis_2022_03_29_170643.csv", header = TRUE)
+PUR <- read.csv(file = "nomis_2022_03_29_170809.csv", header = TRUE)
+
+#join data
+Dat <- merge(PUR,IND)
+
+#create results frame
+PopS <- data.frame(SIC_Code = c("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","T","U"),
+                   Estimate = c("0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"))
+
+#regression & Stire results
+A <- lm(A ~ X2011 , data = Dat)
+PopS[1,2] <- summary(A)$coefficients[2,1]
+B <- lm(B ~ X2011 , data = Dat)
+PopS[2,2] <- summary(B)$coefficients[2,1]
+C <- lm(C ~ X2011 , data = Dat)
+PopS[3,2] <- summary(C)$coefficients[2,1]
+D <- lm(D ~ X2011 , data = Dat)
+PopS[4,2] <- summary(D)$coefficients[2,1]
+E <- lm(E ~ X2011 , data = Dat)
+PopS[5,2] <- summary(E)$coefficients[2,1]
+F <- lm(F ~ X2011 , data = Dat)
+PopS[6,2] <- summary(F)$coefficients[2,1]
+G <- lm(G ~ X2011 , data = Dat)
+PopS[7,2] <- summary(G)$coefficients[2,1]
+H <- lm(H ~ X2011 , data = Dat)
+PopS[8,2] <- summary(H)$coefficients[2,1]
+I <- lm(I ~ X2011 , data = Dat)
+PopS[9,2] <- summary(I)$coefficients[2,1]
+J <- lm(J ~ X2011 , data = Dat)
+PopS[10,2] <- summary(J)$coefficients[2,1]
+K <- lm(K ~ X2011 , data = Dat)
+PopS[11,2] <- summary(K)$coefficients[2,1]
+L <- lm(L ~ X2011 , data = Dat)
+PopS[12,2] <- summary(L)$coefficients[2,1]
+M <- lm(M ~ X2011 , data = Dat)
+PopS[13,2] <- summary(M)$coefficients[2,1]
+N <- lm(N ~ X2011 , data = Dat)
+PopS[14,2] <- summary(N)$coefficients[2,1]
+O <- lm(O ~ X2011 , data = Dat)
+PopS[15,2] <- summary(O)$coefficients[2,1]
+P <- lm(P ~ X2011 , data = Dat)
+PopS[16,2] <- summary(P)$coefficients[2,1]
+Q <- lm(Q ~ X2011 , data = Dat)
+PopS[17,2] <- summary(Q)$coefficients[2,1]
+R <- lm(R ~ X2011 , data = Dat)
+PopS[18,2] <- summary(R)$coefficients[2,1]
+T <- lm(T ~ X2011 , data = Dat)
+PopS[19,2] <- summary(T)$coefficients[2,1]
+U <- lm(U ~ X2011 , data = Dat)
+PopS[20,2] <- summary(U)$coefficients[2,1]
+
+#reset defined zeros
+PopS[1,2] <- "0"
+PopS[2,2] <- "0"
+PopS[3,2] <- "0"
+PopS[10,2] <- "0"
+PopS[11,2] <- "0"
+PopS[12,2] <- "0"
+PopS[19,2] <- "0"
+PopS[20,2] <- "0"
+
+#write results to csv
+write.csv(PopS,"pop serving.csv",row.names = FALSE)
